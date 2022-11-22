@@ -28,7 +28,7 @@
 using namespace std;
 
 int main(void) {
-
+    int a = 0;
     uint32_t pc(0);
     array<uint32_t, 4> reg = array<uint32_t, 4>();
 
@@ -50,7 +50,8 @@ int main(void) {
     
     //Simulation loop
     while(1) {
-
+        a = 0;
+    
         uint32_t instr = progr[pc >> 2];
         uint32_t opcode = instr & 0x7f;
         uint32_t rd = (instr >> 7) & 0x01f;
@@ -85,6 +86,7 @@ int main(void) {
             case 0x3: // LB/LH/LW/LBU/LHU (funct 3 value)
 
                 switch (funct3)
+                {
                     case 0b000: //LB
 
                         break;
@@ -105,6 +107,7 @@ int main(void) {
 
                         break;
                 break;
+                }
             
             //----------Store instructions----------
             case 0x23: // SB/SH/SW
@@ -210,7 +213,7 @@ int main(void) {
 
                     break;
                     case 0b100: //XOR
-                    reg[rd] = reg[rs1]^reg[rs2];
+                        reg[rd] = reg[rs1] ^ reg[rs2];
                     break;
                     
                     case 0b101:
@@ -221,25 +224,24 @@ int main(void) {
                             break;
                         
                         case 0b0100000: //sra
-                        if((reg[rs1] & 0x80000000) == 0x80000000)
-                        {
-                            reg[rd] = ((reg[rs1] & 0x7FFFFFFF ) >> reg[rs2]) | 0x80000000;
-                        }
-                        else
-                        {
-                            reg[rd] = (reg[rs1] & 0x7FFFFFFF ) >> reg[rs2];
-                        }
-                        break;
+                            if((reg[rs1] & 0x80000000) == 0x80000000)
+                            {
+                                reg[rd] = ((reg[rs1] & 0x7FFFFFFF ) >> reg[rs2]) | 0x80000000;
+                            }
+                            else
+                            {
+                                reg[rd] = (reg[rs1] & 0x7FFFFFFF ) >> reg[rs2];
+                            }
                             break;
-                        
+                        break;                  
 
                         }
                     case 0b110://or
-                    reg[rd] = reg[rs1] | reg[rs2];
+                        reg[rd] = reg[rs1] | reg[rs2];
                     break;
                     
                     case 0b111: //and
-                    reg[rd] = reg[rs1] & reg[rs2];
+                        reg[rd] = reg[rs1] & reg[rs2];
                     break;
                     
                 }
@@ -257,17 +259,19 @@ int main(void) {
         if ((pc >> 2) >= progr.size()) {
             break;
         }
-
+        cin >> a;
+        if (a == 1){
+            for (size_t i(0); i < 31; ++i) {
+            cout << "x"<< i<< ": "<<reg[i] << "\n";
+            }
+            cout << endl;
+        }
         
     }
-    for (size_t i(0); i < 31; ++i) {
-            cout << "x"<< i<< ": "<<reg[i] << "\n";
-        }
-        cout << endl;
+    cin >> a;
     
     cout << "Program exit" << endl;
 
-    int a;
-    cin >> a;
+    
     return NO_ERR;
 }
