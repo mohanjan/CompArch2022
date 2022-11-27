@@ -61,8 +61,8 @@ int main(void) {
         i++;
     }
 
-    std::string fileloc = "task1/set.bin";
-    cin>> fileloc;
+    std::string fileloc = "task1/shift2.bin";
+    //cin>> fileloc;
     
     std::cout << fileloc << endl;
 
@@ -187,10 +187,13 @@ int main(void) {
                     
                     break;
                 case 0x2: //SLTI
-                    if(int32_t(reg[rs1]) < imm) //make sure it is sign extended
+                    if((imm & 0x800) == 0x800){
+                        imm |= 0xFFFFF000; 
+                    }
+                    if(int32_t(reg[rs1]) < int32_t(imm)) //make sure it is sign extended
                     {
                         reg[rd] = 1;
-                    } 
+                    }
                     else
                     {
                         reg[rd] = 0;
@@ -198,7 +201,7 @@ int main(void) {
                     break;
 
                 case 0x3: //SLTIU 
-                    if (reg[rs1] < imm)  //same as above, but imm is treated as unsigned
+                    if (reg[rs1] < imm) 
                     {
                         reg[rd] = 1;
                     }
@@ -229,7 +232,7 @@ int main(void) {
                     {
                     case 0b0100000: //SRAI
                         if((reg[rs1] & 0x80000000) == 0x80000000){
-                            reg[rd] = ((reg[rs1] & 0x7FFFFFFF ) >> (imm & 0x1f)) | 0x80000000;
+                            reg[rd] = (int32_t(reg[rs1]) >> (imm & 0x1f))/*| 0x80000000*/;
                         }
                         else
                         {
@@ -295,22 +298,24 @@ int main(void) {
                         switch (funct7)
                         {
                         case 0b0000000: //srl
-                            reg[rd] = reg[rs1]>>reg[rs2];
+                            reg[rd] = reg[rs1] >> (reg[rs2] & 0b11111);
                             break;
                         
                         case 0b0100000: //sra
                             if((reg[rs1] & 0x80000000) == 0x80000000)
                             {
-                                reg[rd] = ((reg[rs1] & 0x7FFFFFFF ) >> reg[rs2]) | 0x80000000;
+                                reg[rd] = (int32_t(reg[rs1]) >> (reg[rs2] & 0b11111));
                             }
                             else
                             {
-                                reg[rd] = (reg[rs1] & 0x7FFFFFFF ) >> reg[rs2];
+                                reg[rd] = (reg[rs1] & 0x7FFFFFFF ) >> (reg[rs2] & 0b11111);
                             }
                             break;
                         break;                  
 
                         }
+                    break;
+                    
                     case 0b110://or
                         reg[rd] = reg[rs1] | reg[rs2];
                     break;
@@ -382,7 +387,7 @@ void read_bin(std::string fileloc, uint32_t mem[]){
 
 void write_bin(uint32_t mem[]){
     int i = 0;
-    while((!mem[i]==0) || i<100){
+    while(!(mem[i]==0) && i<100){
         std::cout<< hex <<mem[i] <<"\n";
         i++;
     }
