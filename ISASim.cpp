@@ -61,10 +61,10 @@ int main(void) {
         i++;
     }
 
-    std::string fileloc = "task1/addneg.bin";
-    //cin>> fileloc;
+    std::string fileloc = "task1/set.bin";
+    cin>> fileloc;
     
-    std::cout << fileloc;
+    std::cout << fileloc << endl;
 
     read_bin(fileloc, memo);
 
@@ -176,7 +176,15 @@ int main(void) {
                 switch (funct3)
                 {
                 case 0x0: //ADDI
-                    reg[rd] = reg[rs1] + imm;
+                    if((imm & 0x800) == 0x800)
+                    {
+                        reg[rd] = reg[rs1] + (imm | 0xfffff000) ;
+                    }
+                    else
+                    {
+                        reg[rd] = reg[rs1] + imm;
+                    }
+                    
                     break;
                 case 0x2: //SLTI
                     if(int32_t(reg[rs1]) < imm) //make sure it is sign extended
