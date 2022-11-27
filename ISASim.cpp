@@ -61,8 +61,11 @@ int main(void) {
         i++;
     }
 
-    string fileloc = "";
-    fileloc = "addlarge.bin";
+    std::string fileloc = "task1/addneg.bin";
+    //cin>> fileloc;
+    
+    std::cout << fileloc;
+
     read_bin(fileloc, memo);
 
     write_bin(memo);
@@ -79,7 +82,7 @@ int main(void) {
         uint32_t rs2 = (instr >> 20) & 0x01f;
         uint32_t imm = (instr >> 20);
         if(imm & 0x800 == 0x800){
-            imm = imm | 0xFFFFF000;
+            imm = imm | 0x800000000;
         }
         uint32_t imm5 = (instr >> 20) & 0b11111;
         uint32_t immU = (instr >> 12) << 12;
@@ -343,7 +346,7 @@ void read_bin(std::string fileloc, uint32_t mem[]){
     int byte_length;
     char * memblock;
 
-    std::ifstream file ("addlarge.bin",std::ios::binary | std::ios::ate);
+    std::ifstream file (fileloc,std::ios::binary | std::ios::ate);
 
     size = file.tellg();
     byte_length = (size);
