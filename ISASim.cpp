@@ -61,14 +61,8 @@ int main(void) {
         i++;
     }
 
-    i = 0;
-    
-    /*while(i < sizeof(inst)/sizeof(uint32_t)){
-        memo[i] = inst[i];
-        i++;
-    }*/
-    i = 0;
-    std::string fileloc = "addlarge.bin";
+    string fileloc = "";
+    fileloc = "addlarge.bin";
     read_bin(fileloc, memo);
 
     write_bin(memo);
@@ -323,7 +317,7 @@ int main(void) {
         }
         
         pc += 4; // One instruction is four bytes
-        if (memo[pc>>2] == 0)
+        if (memo[pc>>2] == 0 || memo[pc>>2] == 0x73)
             break;
 
         //if ((pc >> 2) >= memo.size()) {
@@ -334,7 +328,7 @@ int main(void) {
     }
    
     for (size_t i(0); i <= 31; ++i) {
-        cout << dec <<"x"<< i<< ": "<< int32_t(reg[i]) << "\n";
+        cout << dec <<"x"<< i<< ": "<< hex << int32_t(reg[i]) << "\t\t" << dec << int32_t(reg[i])<<"\n";
     }
  
     cin >> a;
