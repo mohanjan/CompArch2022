@@ -18,11 +18,15 @@
  * 
  */
 
+//#include "inc/ISAsupp.h"
 #include <iostream>
+#include <fstream>
 #include <array>
+#include <string>
 #include <cstdint>
-#include "ISAsupp.h"
 
+void read_bin(std::string fileloc, uint32_t mem[]);
+void write_bin(uint32_t mem[]);
 #define NO_ERR 0;
 
 using namespace std;
@@ -33,7 +37,8 @@ int main(void) {
     uint32_t i;
     array<uint32_t, 32> reg;
     // Here the first program hard coded as an array
-    array<uint32_t, 10000> memo;
+    //array<uint32_t, 10000> memo;
+    uint32_t memo[10000];
     array<uint32_t, 7> inst = {
         0x00a00513,
         0x01400593,
@@ -47,6 +52,7 @@ int main(void) {
     for(i = 0; i<= 31;i++){
         reg[i] = 0;
     }
+    reg[2] = sizeof(memo)/sizeof(uint32_t);
 
     i = 0;
 
@@ -57,16 +63,20 @@ int main(void) {
 
     i = 0;
     
-    while(i < sizeof(inst)/sizeof(uint32_t)){
+    /*while(i < sizeof(inst)/sizeof(uint32_t)){
         memo[i] = inst[i];
         i++;
-    }
+    }*/
     i = 0;
+    std::string fileloc = "addlarge.bin";
+    read_bin(fileloc, memo);
+
+    write_bin(memo);
 
     cout << "Hello RISC-V World!" << endl;
 
     while(1) {
-        
+        reg[0] = 0;
     
         uint32_t instr = memo[pc >> 2];
         uint32_t opcode = instr & 0x7f;
@@ -74,6 +84,9 @@ int main(void) {
         uint32_t rs1 = (instr >> 15) & 0x01f;
         uint32_t rs2 = (instr >> 20) & 0x01f;
         uint32_t imm = (instr >> 20);
+        if(imm & 0x800 == 0x800){
+            imm = imm | 0xFFFFF000;
+        }
         uint32_t imm5 = (instr >> 20) & 0b11111;
         uint32_t immU = (instr >> 12) << 12;
         uint32_t immS = (instr >> 25) << 5 | ((instr >> 7) & 0b11111); //todo: add signage
@@ -203,7 +216,7 @@ int main(void) {
                     break;
 
                 case 0x1: //SLLI
-                    reg[rd] = (reg[rs1]) << imm5; // todo: be sure that this is correct
+                    reg[rd] = (reg[rs1]) << (imm & 0x1f); // todo: be sure that this is correct
                     break;
 
                 case 0x5: //SRLI/SRAI
@@ -211,16 +224,16 @@ int main(void) {
                     {
                     case 0b0100000: //SRAI
                         if((reg[rs1] & 0x80000000) == 0x80000000){
-                            reg[rd] = ((reg[rs1] & 0x7FFFFFFF ) >> imm5) | 0x80000000;
+                            reg[rd] = ((reg[rs1] & 0x7FFFFFFF ) >> (imm & 0x1f)) | 0x80000000;
                         }
                         else
                         {
-                            reg[rd] = (reg[rs1] & 0x7FFFFFFF ) >> imm5;
+                            reg[rd] = (reg[rs1] & 0x7FFFFFFF ) >> (imm & 0x1f);
                         }
                         break;
                 
                     case 0b0000000: //SRLI
-                        reg[rd] = reg[rs1] >> imm;
+                        reg[rd] = reg[rs1] >> (imm & 0x1f);
 
                         break;
                     }
@@ -305,7 +318,7 @@ int main(void) {
                 break;
 
             default:
-                cout << "Opcode " << opcode << " not yet implemented" << endl;
+                cout << "Opcode " << hex << opcode << " not yet implemented" << endl;
                 break;
         }
         
@@ -316,23 +329,64 @@ int main(void) {
         //if ((pc >> 2) >= memo.size()) {
         //    break;
         //}
-
-        
-        
+ 
         
     }
    
     for (size_t i(0); i <= 31; ++i) {
-        cout << "x"<< i<< ": "<< int32_t(reg[i]) << "\n";
+        cout << dec <<"x"<< i<< ": "<< int32_t(reg[i]) << "\n";
     }
-    cout << endl;
  
-    cin >> a ;
+    cin >> a;
     cout << "Program exit" << endl;
     
     
     return NO_ERR;
 }
+
+void read_bin(std::string fileloc, uint32_t mem[]){
+    std::streampos size;
+    int byte_length;
+    char * memblock;
+
+    std::ifstream file ("addlarge.bin",std::ios::binary | std::ios::ate);
+
+    size = file.tellg();
+    byte_length = (size);
+    
+    if (file.is_open())
+    {
+        file.seekg (0, std::ios::beg);
+        memblock = new char [size];
+        file.read (memblock, size);
+
+        for(int i = 0;i < byte_length/4;i++){
+            for(int j = 0; j < 4; j++){
+                file.seekg(j + 4*i, std::ios::beg);
+                file.read(memblock,1);
+                mem[i] |= (uint32_t(memblock[i*4+j] & 0xff) << j*8);
+            }
+        }
+        file.close();
+
+    }
+    else std::cout << "Unable to open file";    
+
+}
+
+
+void write_bin(uint32_t mem[]){
+    int i = 0;
+    while((!mem[i]==0) || i<100){
+        std::cout<< hex <<mem[i] <<"\n";
+        i++;
+    }
+
+}
+
+
+
+
 
 /*
 void big_switch(uint32_t opcode){
