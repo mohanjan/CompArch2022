@@ -33,7 +33,7 @@ using namespace std;
 
 int main(void) {
     int a = 0;
-    uint32_t pc(0);
+    int32_t pc(0);
     uint32_t i;
     array<uint32_t, 32> reg;
     // Here the first program hard coded as an array
@@ -61,8 +61,8 @@ int main(void) {
         i++;
     }
 
-    std::string fileloc = "task1/shift2.bin";
-    //cin>> fileloc;
+    std::string fileloc = "task2/branchcnt.bin";
+    cin>> fileloc;
     
     std::cout << fileloc << endl;
 
@@ -87,7 +87,12 @@ int main(void) {
         uint32_t imm5 = (instr >> 20) & 0b11111;
         uint32_t immU = (instr >> 12) << 12;
         uint32_t immS = (instr >> 25) << 5 | ((instr >> 7) & 0b11111); //todo: add signage
-        uint32_t funct3 = ((instr >> 12) & 0b111); 
+        //                 --4:1--                           --12|10:5                                         --11--
+        int32_t immB = (((instr >> 8) & 0b1111) | (((instr >> 25) & 0b111111) << 4) | ((instr >> 31) << 11) | (((instr & 0x80) >> 7) << 10) ) << 1;
+        if ((immB & 0x1000) == 0x1000){
+            immB = (immB)| 0xFFFFF000 ;
+        }
+        uint32_t funct3 = ((instr >> 12) & 0b111);
         uint32_t funct7 = (instr >> 25);
 
 
@@ -102,15 +107,57 @@ int main(void) {
             
             //----------Jump & branch instructions----------
             case 0x6F: //JAL
-                
+                reg[rd] = pc+4;
+                pc = imm;
             break;
             case 0x67: //JALR
                 
             break;
             case 0x63: //BEQ/BNE/BLTU/BGEU (funct 3 value)
-                
-            break;
+                switch (funct3)
+                {
+                case 0b000: //BEQ
+                    if(reg[rs1] == reg[rs2]){
+                            pc += immB - 4;                        
+                    }
+                    break;
 
+                case 0b001: //BNE
+                    if(reg[rs1] != reg[rs2]){
+                            pc += immB - 4;
+                    }
+                    break;
+
+                case 0b100: //BLT
+                    if(int32_t(reg[rs1]) < int32_t(reg[rs2])){
+                        pc += immB - 4;
+                    }
+                    
+                    break;
+
+                case 0b101: //BGE
+                    if(int32_t(reg[rs1]) >= int32_t(reg[rs2])){
+                        pc += immB - 4;
+                    }
+                    
+                    break;
+
+                case 0b110: //BLTU
+                    if(reg[rs1] < reg[rs2]){
+                        pc += immB - 4;
+                    }
+                    
+                    break;  
+
+                case 0b111: //BGEU
+                    if(reg[rs1] > reg[rs2]){
+                        pc += immB - 4;
+                    }
+                    
+                    break;
+                }
+            
+                break;
             //----------Load instructions----------
             case 0x3: // LB/LH/LW/LBU/LHU (funct 3 value)
 
@@ -151,7 +198,7 @@ int main(void) {
                     break;
             
             }
-            break;
+                break;
             
             //----------Store instructions----------
             case 0x23: // SB/SH/SW
@@ -184,8 +231,8 @@ int main(void) {
                     {
                         reg[rd] = reg[rs1] + imm;
                     }
-                    
                     break;
+
                 case 0x2: //SLTI
                     if((imm & 0x800) == 0x800){
                         imm |= 0xFFFFF000; 
@@ -315,7 +362,7 @@ int main(void) {
 
                         }
                     break;
-                    
+
                     case 0b110://or
                         reg[rd] = reg[rs1] | reg[rs2];
                     break;
