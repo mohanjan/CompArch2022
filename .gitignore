@@ -2,3 +2,5 @@
 *.exe
 *.json
 *.txt
+*.res
+*.s
