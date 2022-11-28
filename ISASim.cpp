@@ -1,7 +1,3 @@
-// read file function
-// the big switch
-// write file results
-
 /**
  * RISC-V Instruction Set Simulator
  * <p>
@@ -14,11 +10,10 @@
  *      cmake ..
  *      make
  *      ./isasim
- * specification found on p130
+ * 
  * 
  */
 
-//#include "inc/ISAsupp.h"
 #include <iostream>
 #include <fstream>
 #include <array>
@@ -30,6 +25,7 @@ void write_bin(uint8_t mem[]);
 uint32_t get_inst(uint8_t mem[], int32_t pc);
 uint32_t get_mem(uint8_t mem[], int32_t address, int32_t size);
 void set_mem(uint8_t mem[], int32_t address, int32_t size, uint32_t regval);
+void binarydump(uint32_t reg[]);
 #define NO_ERR 0;
 
 using namespace std;
@@ -38,14 +34,13 @@ int main(void) {
     int a = 0;
     int32_t pc(0);
     uint32_t i;
-    array<uint32_t, 32> reg;
-    uint8_t memo[800000];
+    uint32_t reg[32];
+    uint8_t memo[1000000];
 
     for(i = 0; i<= 31;i++){
         reg[i] = 0;
     }
     reg[2] = sizeof(memo)/sizeof(uint32_t);
-    reg[3] = sizeof(memo)/sizeof(uint32_t)/2;
     i = 0;
     
     while(i < sizeof(memo)/sizeof(uint32_t)){
@@ -53,11 +48,8 @@ int main(void) {
         i++;
     }
 
-    std::string fileloc = "task4/t";
-    //std::string fileloc = "task4/t11.bin";
-    int test;
-    cin>> test;
-    fileloc += to_string(test) + ".bin";
+    std::string fileloc;
+    cin>> fileloc;
    
     std::cout << fileloc << endl;
 
@@ -70,7 +62,6 @@ int main(void) {
     while(1) {
         reg[0] = 0;
     
-        //uint32_t instr = memo[pc >> 2];
         uint32_t instr = memo[pc] + (memo[pc+1] << 8) + (memo[pc+2] << 16)+ (memo[pc+3] <<24);
         uint32_t opcode = instr & 0x7f;
         uint32_t rd = (instr >> 7) & 0x01f;
@@ -96,8 +87,8 @@ int main(void) {
 
         //                  --10:1--                    --11--                      --19:12--                          --20--
         int32_t immJ = (((instr >> 21) & 0x3FF) << 1) | (((instr >> 20) & 0b1) << 10) | (((instr >> 12) & 0xF) << 11) | (instr & 0x80000000)>>12;
-        if ((immJ & 0x1000) == 0x1000){
-            immJ = immJ | 0xFFFFF000;
+        if ((immJ & 0x80000) == 0x80000){
+            immJ = immJ | 0xFFF00000;
         }
         
         switch (opcode) {
@@ -167,7 +158,7 @@ int main(void) {
             //----------Load instructions----------
             case 0x3: // LB/LH/LW/LBU/LHU (funct 3 value)
 
-            switch (funct3) //well since my memory is segmented into words and not bytes, there is a problem with LH and LW types
+            switch (funct3)
             {
                 case 0b000: //LB
                     if (( get_mem(memo, (imm + reg[rs1]), 1) & 0x80 ) == 0x80)
@@ -181,7 +172,7 @@ int main(void) {
                     break;
                 
                 case 0b001: //LH
-                    //new attempt
+                  
                     if ((get_mem(memo, imm + reg[rs1], 2) & 0x8000 ) == 0x8000)
                     {
                         reg[rd] = ((get_mem(memo, (imm + reg[rs1]), 2) & 0xFFFF) | 0xFFFF0000 );
@@ -247,7 +238,7 @@ int main(void) {
                     if((imm & 0x800) == 0x800){
                         imm |= 0xFFFFF000; 
                     }
-                    if(int32_t(reg[rs1]) < int32_t(imm)) //make sure it is sign extended
+                    if(int32_t(reg[rs1]) < int32_t(imm))
                     {
                         reg[rd] = 1;
                     }
@@ -281,7 +272,7 @@ int main(void) {
                     break;
 
                 case 0x1: //SLLI
-                    reg[rd] = (reg[rs1]) << (imm & 0x1f); // todo: be sure that this is correct
+                    reg[rd] = (reg[rs1]) << (imm & 0x1f);
                     break;
 
                 case 0x5: //SRLI/SRAI
@@ -289,7 +280,7 @@ int main(void) {
                     {
                     case 0b0100000: //SRAI
                         if((reg[rs1] & 0x80000000) == 0x80000000){
-                            reg[rd] = (int32_t(reg[rs1]) >> (imm & 0x1f))/*| 0x80000000*/;
+                            reg[rd] = (int32_t(reg[rs1]) >> (imm & 0x1f));
                         }
                         else
                         {
@@ -393,11 +384,7 @@ int main(void) {
         if (get_inst(memo,pc) == 0 || get_inst(memo,pc) == 0x73)
             break;
 
-        //if ((pc >> 2) >= memo.size()) {
-        //    break;
-        //}
- 
-        
+       
     }
    
     for (size_t i(0); i <= 31; ++i) {
@@ -406,13 +393,30 @@ int main(void) {
  
     cin >> a;
     cout << "Program exit" << endl;
-    
+    binarydump(reg);
     
     return NO_ERR;
 }
 
 uint32_t get_inst(uint8_t mem[], int32_t pc){
     return mem[pc] +(mem[pc+1]<<8)+(mem[pc+2]<<16)+(mem[pc+3]<<16);
+}
+
+void binarydump(uint32_t reg[]){
+    unsigned char buffer[4*32];
+    FILE *write_ptr;
+
+    write_ptr = fopen("output.bin","wb");
+
+    for(int i = 0; i<32;i++){
+        for (int j = 0; j < 4; j++)
+        {
+            buffer[j+4*i] << ((reg[i] & 0xFF << j*8) >> j* 8);
+        }
+        
+
+    }
+    fwrite(buffer,sizeof(buffer),1,write_ptr);
 }
 
 uint32_t get_mem(uint8_t mem[], int32_t address, int32_t size){
@@ -463,8 +467,7 @@ void read_bin(std::string fileloc, uint8_t mem[]){
         file.seekg (0, std::ios::beg);
         memblock = new char [size];
         file.read (memblock, size);
-        
-        //new byte adressed version
+       
         for(int i = 0;i < byte_length;i++){
             
                 file.seekg(i, std::ios::beg);
@@ -473,14 +476,6 @@ void read_bin(std::string fileloc, uint8_t mem[]){
             
         }
 
-        /* old version
-        for(int i = 0;i < byte_length/4;i++){
-            for(int j = 0; j < 4; j++){
-                file.seekg(j + 4*i, std::ios::beg);
-                file.read(memblock,1);
-                mem[i] |= (uint32_t(memblock[i*4+j] & 0xff) << j*8);
-            }
-        }*/
         file.close();
 
     }
