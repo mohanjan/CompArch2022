@@ -36,11 +36,11 @@ int main(void) {
     uint32_t i;
     uint32_t reg[32];
     uint8_t memo[1000000];
+    bool jflag;
 
     for(i = 0; i<= 31;i++){
         reg[i] = 0;
     }
-    reg[2] = sizeof(memo)/sizeof(uint32_t);
     i = 0;
     
     while(i < sizeof(memo)/sizeof(uint32_t)){
@@ -61,6 +61,7 @@ int main(void) {
 
     while(1) {
         reg[0] = 0;
+        jflag = false;
     
         uint32_t instr = memo[pc] + (memo[pc+1] << 8) + (memo[pc+2] << 16)+ (memo[pc+3] <<24);
         uint32_t opcode = instr & 0x7f;
@@ -103,11 +104,13 @@ int main(void) {
             //----------Jump & branch instructions----------
             case 0x6F: //JAL
                 reg[rd] = pc+4;
-                pc += immJ - 4;
+                pc += immJ;
+                jflag = true;
                 break;
             case 0x67: //JALR
                 reg[rd] = pc+4;
-                pc = (imm + reg[rs1]) & 0xFFFFFFFE - 4;
+                pc = (imm + reg[rs1]) & 0xFFFFFFFE;
+                jflag = true;
                 break;
 
             case 0x63: //BEQ/BNE/BLTU/BGEU (funct 3 value)
@@ -115,40 +118,46 @@ int main(void) {
                 {
                 case 0b000: //BEQ
                     if(reg[rs1] == reg[rs2]){
-                            pc += immB - 4;                        
+                            pc += immB;
+                            jflag = true;                        
                     }
                     break;
 
                 case 0b001: //BNE
                     if(reg[rs1] != reg[rs2]){
-                            pc += immB - 4;
+                            pc += immB;
+                            jflag = true; 
                     }
                     break;
 
                 case 0b100: //BLT
                     if(int32_t(reg[rs1]) < int32_t(reg[rs2])){
-                        pc += immB - 4;
+                        pc += immB;
+                        jflag = true; 
                     }
                     
                     break;
 
                 case 0b101: //BGE
                     if(int32_t(reg[rs1]) >= int32_t(reg[rs2])){
-                        pc += immB - 4;
+                        pc += immB;
+                        jflag = true; 
                     }
                     
                     break;
 
                 case 0b110: //BLTU
                     if(reg[rs1] < reg[rs2]){
-                        pc += immB - 4;
+                        pc += immB;
+                        jflag = true; 
                     }
                     
                     break;  
 
                 case 0b111: //BGEU
                     if(reg[rs1] > reg[rs2]){
-                        pc += immB - 4;
+                        pc += immB;
+                        jflag = true; 
                     }
                     
                     break;
@@ -204,17 +213,14 @@ int main(void) {
             {
                 case 0b000: 
                     set_mem(memo, (reg[rs1] + immS), 1, reg[rs2]);
-                    //memo[(reg[rs1] + immS) >> 2] = reg[rs2] & 0xff;
                     break;
 
                 case 0b001:
-                    set_mem(memo, (reg[rs1] + immS), 2, reg[rs2]);
-                    //memo[(reg[rs1] + immS) >> 2] = reg[rs2] & 0xffff;
+                    set_mem(memo, (reg[rs1] + immS), 2, reg[rs2]);             
                     break;
 
                 case 0b010:
                     set_mem(memo, (reg[rs1] + immS), 4, reg[rs2]);
-                    //memo[(reg[rs1] + immS) >> 2] = reg[rs2];
                     break;
                 }    
                 break;
@@ -380,7 +386,10 @@ int main(void) {
                 break;
         }
         
-        pc += 4;
+        if(jflag == false){
+            pc += 4;
+        }
+        
         if (get_inst(memo,pc) == 0 || get_inst(memo,pc) == 0x73)
             break;
 
