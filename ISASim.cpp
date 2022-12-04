@@ -16,7 +16,7 @@ using namespace std;
 
 int main(void) {
     int a = 0;
-    uint32_t pc=0;
+    int32_t pc=0;
     uint32_t i;
     uint32_t reg[32];
     uint8_t memo[1000000];
