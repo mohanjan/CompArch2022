@@ -16,7 +16,7 @@ using namespace std;
 
 int main(void) {
     int a = 0;
-    int32_t pc(0);
+    uint32_t pc=0;
     uint32_t i;
     uint32_t reg[32];
     uint8_t memo[1000000];
@@ -32,10 +32,10 @@ int main(void) {
         i++;
     }
 
-    std::string fileloc;
+    string fileloc;
     cin>> fileloc;
    
-    std::cout << fileloc << endl;
+    cout << fileloc << endl;
 
     read_bin(fileloc, memo);
 
@@ -43,17 +43,25 @@ int main(void) {
 
     cout << "Hello RISC-V World!" << endl;
 
+    uint32_t instr;
+    uint32_t opcode;
+    uint32_t rd;
+    uint32_t rs1;
+    uint32_t rs2;
+    uint32_t funct3;
+    uint32_t funct7;
+
     while(1) {
         reg[0] = 0;
         jflag = false;
     
-        uint32_t instr = memo[pc] + (memo[pc+1] << 8) + (memo[pc+2] << 16)+ (memo[pc+3] <<24);
-        uint32_t opcode = instr & 0x7f;
-        uint32_t rd = (instr >> 7) & 0x01f;
-        uint32_t rs1 = (instr >> 15) & 0x01f;
-        uint32_t rs2 = (instr >> 20) & 0x01f;
-        uint32_t funct3 = ((instr >> 12) & 0b111);
-        uint32_t funct7 = (instr >> 25);
+        instr = memo[pc] + (memo[pc+1] << 8) + (memo[pc+2] << 16)+ (memo[pc+3] <<24);
+        opcode = instr & 0x7f;
+        rd = (instr >> 7) & 0x01f;
+        rs1 = (instr >> 15) & 0x01f;
+        rs2 = (instr >> 20) & 0x01f;
+        funct3 = ((instr >> 12) & 0b111);
+        funct7 = (instr >> 25);
 
         uint32_t imm = (instr >> 20);
         if(imm & 0x800 == 0x800){
@@ -377,7 +385,8 @@ int main(void) {
         if (get_inst(memo,pc) == 0 || get_inst(memo,pc) == 0x73){
             break;
         }
-            
+
+  
 
        
     }
