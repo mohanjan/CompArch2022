@@ -1,19 +1,3 @@
-/**
- * RISC-V Instruction Set Simulator
- * <p>
- * A tiny first step to get the simulator started. Can execute just a single
- * RISC-V instruction.
- * 
- * To run this program: 
- *      mkdir build
- *      cd build
- *      cmake ..
- *      make
- *      ./isasim
- * 
- * 
- */
-
 #include <iostream>
 #include <fstream>
 #include <array>
@@ -390,19 +374,21 @@ int main(void) {
             pc += 4;
         }
         
-        if (get_inst(memo,pc) == 0 || get_inst(memo,pc) == 0x73)
+        if (get_inst(memo,pc) == 0 || get_inst(memo,pc) == 0x73){
             break;
+        }
+            
 
        
     }
-   
-    for (size_t i(0); i <= 31; ++i) {
+    binarydump(reg);
+    for (int i = 0; i <= 31; i++) {
         cout << dec <<"x"<< i<< ": "<< hex << int32_t(reg[i]) << "\t\t" << dec << int32_t(reg[i])<<"\n";
     }
- 
+    
     cin >> a;
     cout << "Program exit" << endl;
-    binarydump(reg);
+    
     
     return NO_ERR;
 }
@@ -415,17 +401,12 @@ void binarydump(uint32_t reg[]){
     unsigned char buffer[4*32];
     FILE *write_ptr;
 
-    write_ptr = fopen("output.bin","wb");
+    ofstream wf("output.bin", ios::out | ios::binary);
 
     for(int i = 0; i<32;i++){
-        for (int j = 0; j < 4; j++)
-        {
-            buffer[j+4*i] << ((reg[i] & 0xFF << j*8) >> j* 8);
-        }
-        
-
+        wf.write((char * ) &reg[i], 4);
     }
-    fwrite(buffer,sizeof(buffer),1,write_ptr);
+    wf.close();
 }
 
 uint32_t get_mem(uint8_t mem[], int32_t address, int32_t size){
@@ -463,7 +444,7 @@ void set_mem(uint8_t mem[], int32_t address, int32_t size, uint32_t regval){
 
 void read_bin(std::string fileloc, uint8_t mem[]){
     std::streampos size;
-    int byte_length;
+    uint32_t byte_length;
     char * memblock;
 
     std::ifstream file (fileloc,std::ios::binary | std::ios::ate);
@@ -502,123 +483,3 @@ void write_bin(uint8_t mem[]){
     }
 
 }
-
-
-
-
-/*
-void process_instruction(uint32_t opcode, ){
-
-    switch (opcode) {
-
-            case 0x37: //LUI
-                reg[rd] = (instr >> 12) << 12;
-                break;
-
-            case 0x17: //AUIPC
-                reg[rd] = ((instr >> 12) << 12) + pc;
-                break;
-            
-            //----------Jump & branch instructions----------
-            case 0x6F: //JAL
-                reg[rd] = pc+4;
-                pc = imm;
-                break;
-            case 0x67: //JALR
-
-                
-                break;
-            case 0x63: //BEQ/BNE/BLTU/BGEU (funct 3 value)
-                pc = B_type();
-            
-                break;
-            
-
-            //----------Load instructions----------
-            case : // LB/LH/LW/LBU/LHU (funct 3 value)
-
-            
-            //----------Store instructions----------
-            case : // SB/SH/SW
-              
-            //----------Immediate arithmetic instructions----------
-            case 0x13: // ADDI/SLTI/XORI/ORI/ANDI/SLLI/SRLI/SRAI
-                
-                    
-                
-
-            //----------Arithmetic instructions----------
-            case : // ADD/SUB/SLL/SLT/SLTU/XOR/SRL/SRA/OR/ANDI
-                    
-                
-
-
-        }
-}
-
-
-void R_type(){
-    
-}
-
-void I_type(){
-
-}
-
-void S_type(){
-    
-}
-
-uint32_t B_type(uint32_t funct3, uint32_t reg[],uint32_t rs1, uint32_t rs2 , uint32_t pc, int32_t immB){
-    switch (funct3)
-        {
-        case 0b000: //BEQ
-            if(reg[rs1] == reg[rs2]){
-                    pc += immB - 4;                        
-            }
-            break;
-
-        case 0b001: //BNE
-            if(reg[rs1] != reg[rs2]){
-                    pc += immB - 4;
-            }
-            break;
-
-        case 0b100: //BLT
-            if(int32_t(reg[rs1]) < int32_t(reg[rs2])){
-                pc += immB - 4;
-            }
-            
-            break;
-
-        case 0b101: //BGE
-            if(int32_t(reg[rs1]) >= int32_t(reg[rs2])){
-                pc += immB - 4;
-            }
-            
-            break;
-
-        case 0b110: //BLTU
-            if(reg[rs1] < reg[rs2]){
-                pc += immB - 4;
-            }
-            
-            break;  
-
-        case 0b111: //BGEU
-            if(reg[rs1] > reg[rs2]){
-                pc += immB - 4;
-            }
-            
-            break;
-        }
-}
-
-void U_type(){
-    
-}
-
-void J_type(){
-    
-}
-*/
